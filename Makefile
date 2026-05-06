@@ -10,7 +10,7 @@ MAIN_SRCS = src/main_no.cpp
 all: $(MAIN_EXEC)
 
 clean:
-	rm build/rede
+	rm -rf build/
 
 debug: CXXFLAGS += -g -O0 -fsanitize=address,undefined
 debug: $(MAIN_EXEC)
