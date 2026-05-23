@@ -9,10 +9,15 @@ MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
 TESTE_CRC_SRCS = src/tests/teste_crc.cpp src/enlace/checksum.cpp
+TESTE_BUFFER_SRCS = src/tests/teste_buffer.cpp src/comum/buffer.cpp
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
 
 build/teste_crc: $(TESTE_CRC_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/teste_buffer: $(TESTE_BUFFER_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -26,6 +31,9 @@ $(TEST_EXEC): $(TEST_SRCS)
 
 teste_crc: build/teste_crc
 	./build/teste_crc
+
+teste_buffer: build/teste_buffer
+	./build/teste_buffer
 
 test: $(TEST_EXEC)
 	./$(TEST_EXEC)
