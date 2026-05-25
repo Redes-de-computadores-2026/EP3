@@ -3,6 +3,7 @@
 #include "udp_socket.hpp"
 #include "enlace.hpp"
 #include "canal.hpp"
+#include "reator.hpp"
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -27,14 +28,15 @@ public:
 int main() {
     UdpSocket sa;
     UdpSocket sb;
+    Reator reator;
 
     sa.udpBind(5001);
     sb.udpBind(5002);
 
-    CanalSimulado cs(0.2, 0.1, 90);
+    CanalSimulado cs(0.2, 0.1, 0.0, 0, 0, 90);
 
-    CamadaEnlace ena(&sa, &cs);
-    CamadaEnlace enb(&sb);
+    CamadaEnlace ena(&sa, &reator, &cs);
+    CamadaEnlace enb(&sb, &reator);
     CamadaSpy spy_b;
 
     enb.conectar_acima(&spy_b);

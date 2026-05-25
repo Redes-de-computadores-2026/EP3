@@ -27,14 +27,15 @@ public:
 int main() {
     UdpSocket sa;
     UdpSocket sb;
+    Reator reator;
 
     sa.udpBind(5001);
     sb.udpBind(5002);
 
-    CanalSimulado cs(0.0, 0.0);
+    CanalSimulado cs(0.0, 0.0, 0.0, 0, 0);
 
-    CamadaEnlace ena(&sa, &cs);
-    CamadaEnlace enb(&sb, &cs);
+    CamadaEnlace ena(&sa, &reator, &cs);
+    CamadaEnlace enb(&sb, &reator, &cs);
 
     CamadaSpy spy_a;
     CamadaSpy spy_b;

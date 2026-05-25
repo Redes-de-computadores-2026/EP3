@@ -16,8 +16,13 @@ TESTE_CANAL_SRCS = src/tests/teste_canal.cpp src/enlace/canal.cpp
 TESTE_REATOR_SRCS = src/tests/teste_reator.cpp src/comum/reator.cpp
 
 TESTE_REATOR_ENLACE_SRCS = src/tests/teste_reator_enlace.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
+TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
+
+build/teste_canal_atraso: $(TESTE_CANAL_ATRASO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/teste_reator_enlace: $(TESTE_REATOR_ENLACE_SRCS)
 	@mkdir -p $(@D)
@@ -54,6 +59,9 @@ $(MAIN_EXEC): $(MAIN_SRCS)
 $(TEST_EXEC): $(TEST_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+teste_canal_atraso: build/teste_canal_atraso
+	./build/teste_canal_atraso
 
 teste_crc: build/teste_crc
 	./build/teste_crc

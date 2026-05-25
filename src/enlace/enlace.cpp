@@ -7,7 +7,7 @@
 #include <vector>
 #include <cstring>
 
-CamadaEnlace::CamadaEnlace(UdpSocket* socket, CanalSimulado* canal) : canal_(canal), socket_(socket) {};
+CamadaEnlace::CamadaEnlace(UdpSocket* socket, Reator* reator, CanalSimulado* canal) : canal_(canal), socket_(socket), reator_(reator) {};
 
 void CamadaEnlace::enviar(const std::vector<uint8_t>& payload, const Endereco& destino) {
     std::vector<uint8_t> buf(TAM_LINK_HEADER + payload.size());
@@ -18,10 +18,16 @@ void CamadaEnlace::enviar(const std::vector<uint8_t>& payload, const Endereco& d
     serializar_link_header(h, buf);
     if (canal_ != nullptr) {
         auto result = canal_->aplicar(buf);
-        if (!result.has_value()) return;
-        buf = result.value();
+        if (result.descartar) return;
+        buf = result.quadro;
+        Endereco e = destino;
+        if (result.atraso_ms == 0) socket_->enviar(buf, destino);
+        else {
+            reator_->agendar(result.atraso_ms, [&, buf, destino, socket_ = socket_]() {
+                socket_->enviar(buf, destino);
+            });
+        }
     }
-    socket_->enviar(buf, destino);
     return;
 }
 

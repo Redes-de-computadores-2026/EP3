@@ -1,17 +1,22 @@
 #include "reator.hpp"
 #include "enlace.hpp"
-#include "udp_socket.hpp"
-#include "camada.hpp"
+#include "canal.hpp"
+#include "quadro.hpp"
 #include <vector>
+#include <cstdint>
 #include <cassert>
 #include <iostream>
+#include <chrono>
+#include <algorithm>
 
 class CamadaSpy : public Camada {
 public:
     bool mensagem_recebida = false;
+    std::chrono::steady_clock::time_point t0;
     std::vector<uint8_t> ultimo_payload_recebido;
     Endereco ultima_origem;
     int contador = 0;
+    std::vector<uint32_t> tempos_chegada;
 
     void enviar(const std::vector<uint8_t>&, const Endereco&) override {};
 
@@ -20,6 +25,8 @@ public:
         ultima_origem = origem;
         ultimo_payload_recebido = pdu;
         contador++;
+        auto tx = std::chrono::steady_clock::now() - t0;
+        tempos_chegada.emplace_back(std::chrono::duration_cast<std::chrono::milliseconds>(tx).count());
     };
 
 };
@@ -32,14 +39,12 @@ int main() {
     sa.udpBind(5001);
     sb.udpBind(5002);
 
-    CamadaEnlace ena(&sa, &r);
+    CanalSimulado cs(0.0, 0.0, 1.0, 100, 200, 90);
+
+    CamadaEnlace ena(&sa, &r, &cs);
     CamadaEnlace enb(&sb, &r);
 
-    CamadaSpy spy_a;
     CamadaSpy spy_b;
-
-    ena.conectar_acima(&spy_a);
-    spy_a.conectar_abaixo(&ena);
 
     enb.conectar_acima(&spy_b);
     spy_b.conectar_abaixo(&enb);
@@ -57,32 +62,25 @@ int main() {
     para_b.porta_fisica = 5002;
     para_b.ip_fisico = "127.0.0.1";
 
-    std::vector<uint8_t> teste = {'h','i'};
-
-    r.agendar(50, [&](){ ena.enviar({'h','i'}, para_b); });
-    r.agendar(500, [&](){ r.parar(); });
-    r.executar();
-
-    assert(spy_b.mensagem_recebida);
-    assert(spy_b.ultima_origem.porta_fisica == 5001);
-    assert(spy_b.ultimo_payload_recebido == teste);
-
-    spy_b.mensagem_recebida = false;
-    spy_b.contador = 0;
+    auto t0 = std::chrono::steady_clock::now();
+    spy_b.t0 = t0;
     for (int i = 0; i < 5; i++) {
-        r.agendar(50 + i*20, [&, i](){
-            std::vector<uint8_t> msg = { uint8_t(i) };
-            ena.enviar(msg, para_b);
-        });
+        ena.enviar({'h','i'}, para_b);
     }
-    r.agendar(500, [&]() { r.parar(); });
+
+    r.agendar(1200, [&]() {
+        r.parar();
+    });
 
     r.executar();
 
-    std::cerr << "Contador: " << spy_b.contador << std::endl;
     assert(spy_b.contador == 5);
+    assert(*std::min_element(spy_b.tempos_chegada.begin(), spy_b.tempos_chegada.end()) >= 100);
+    for (uint32_t tx: spy_b.tempos_chegada) {
+        std::cout << "Tempo de chegada= " << tx << "ms" << std::endl;
+    }
 
-    std::cout << "Teste OK" << std::endl;
+    std::cout << "Testes OK!" << std::endl;
 
     return 0;
 }
