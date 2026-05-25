@@ -2,6 +2,7 @@
 #include "camada.hpp"
 #include "udp_socket.hpp"
 #include "enlace.hpp"
+#include "canal.hpp"
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -30,8 +31,10 @@ int main() {
     sa.udpBind(5001);
     sb.udpBind(5002);
 
-    CamadaEnlace ena(&sa);
-    CamadaEnlace enb(&sb);
+    CanalSimulado cs(0.0, 0.0);
+
+    CamadaEnlace ena(&sa, &cs);
+    CamadaEnlace enb(&sb, &cs);
 
     CamadaSpy spy_a;
     CamadaSpy spy_b;

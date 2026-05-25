@@ -11,7 +11,7 @@ TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
 TESTE_CRC_SRCS = src/tests/teste_crc.cpp src/enlace/checksum.cpp
 TESTE_BUFFER_SRCS = src/tests/teste_buffer.cpp src/comum/buffer.cpp
 
-TESTE_ENLACE_SRCS = src/tests/teste_enlace.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/comum/buffer.cpp
+TESTE_ENLACE_SRCS = src/tests/teste_canal_enlace.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp src/enlace/checksum.cpp src/comum/buffer.cpp
 TESTE_CANAL_SRCS = src/tests/teste_canal.cpp src/enlace/canal.cpp
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
@@ -25,6 +25,10 @@ build/teste_buffer: $(TESTE_BUFFER_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/teste_enlace: $(TESTE_ENLACE_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/teste_canal_enlace: $(TESTE_ENLACE_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -48,6 +52,9 @@ teste_buffer: build/teste_buffer
 
 teste_enlace: build/teste_enlace
 	./build/teste_enlace
+
+teste_canal_enlace: build/teste_canal_enlace
+	./build/teste_canal_enlace
 
 teste_canal: build/teste_canal
 	./build/teste_canal
