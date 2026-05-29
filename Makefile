@@ -21,7 +21,7 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
 
 ## CAMADA TRANSPORTE: ##
 TESTE_SEGMENTO_SRCS = src/tests/teste_segmento.cpp src/comum/buffer.cpp
-TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte.cpp src/comum/buffer.cpp
+TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte.cpp src/transporte/conexao.cpp src/comum/buffer.cpp
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
 

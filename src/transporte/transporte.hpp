@@ -1,13 +1,19 @@
 #pragma once
 #include "camada.hpp"
+#include "segmento.hpp"
+#include "conexao.hpp"
 #include <cstdint>
+#include <map>
+#include <functional>
 
 class CamadaTransporte : public Camada {
+    std::map<ChaveConexao, Conexao> conexoes_;
 public:
-    explicit CamadaTransporte(uint16_t porta_local);
+    CamadaTransporte(uint16_t porta_local);
+    Conexao& abrir(uint16_t porta_local, const Endereco& destino, std::function<void(const std::vector<uint8_t>&)> callback);
     void enviar(const std::vector<uint8_t>& payload, const Endereco& destino) override;
     void receber(const std::vector<uint8_t>& pdu, const Endereco& origem) override;
-
+    void _enviar_segmento(const ChaveConexao& chave, const std::vector<uint8_t>& payload,uint8_t flags, uint32_t seq, uint32_t ack);
 private:
     uint16_t porta_local_;
 };
