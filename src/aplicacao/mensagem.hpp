@@ -8,10 +8,11 @@ enum class TipoMensagem : uint8_t
     CONNECT = 0x01,
     CONNECT_ACK = 0x02,
     CONNECT_DENY = 0x03,
-    DISCONNECT = 0x04,
-    CHAT = 0x05,
-    ARQUIVO = 0x06,
-    ERROR = 0x07
+    CONNECTED = 0x04,
+    DISCONNECT = 0x05,
+    CHAT = 0x06,
+    ARQUIVO = 0x07,
+    ERROR = 0x08
 }
 
 constexpr size_t TAM_APP_HEADER = 42;
@@ -44,3 +45,28 @@ inline AppHeader desserializar_app_header(const std::vector<uint8_t>& buf) {
     h.timestamp      = le_u32_be(buf, 38);
     return h;
 }
+
+inline AppHeader montar_header(
+    TipoMensagem tipo,
+    uint16_t     session_id,
+    const std::string& sender,
+    uint16_t     payload_length)
+{
+    AppHeader h;
+    h.msg_type       = static_cast<uint8_t>(tipo);
+    h.session_id     = session_id;
+    h.payload_length = payload_length;
+    h.timestamp      = static_cast<uint32_t>(std::time(nullptr));
+ 
+    uint8_t len = static_cast<uint8_t>(std::min(sender.size(), size_t(31)));
+    h.sender_len = len;
+    std::memcpy(h.sender, sender.data(), len);
+    h.sender[len] = '\0';
+ 
+    return h;
+}
+
+inline std::string sender_do_header(const AppHeader& h) {
+    return std::string(h.sender, h.sender_len);
+}
+
