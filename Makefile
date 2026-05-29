@@ -1,7 +1,7 @@
 .PHONY: all clean debug release test
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/transporte
 
 MAIN_EXEC = build/rede
 MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp
@@ -18,7 +18,15 @@ TESTE_REATOR_SRCS = src/tests/teste_reator.cpp src/comum/reator.cpp
 TESTE_REATOR_ENLACE_SRCS = src/tests/teste_reator_enlace.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
 TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
 
+
+## CAMADA TRANSPORTE: ##
+TESTE_SEGMENTO_SRCS = src/tests/teste_segmento.cpp src/comum/buffer.cpp
+
 all: $(MAIN_EXEC) $(TEST_EXEC)
+
+build/teste_segmento: $(TESTE_SEGMENTO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/teste_canal_atraso: $(TESTE_CANAL_ATRASO_SRCS)
 	@mkdir -p $(@D)
@@ -83,6 +91,9 @@ teste_reator: build/teste_reator
 
 teste_reator_enlace: build/teste_reator_enlace
 	./build/teste_reator_enlace
+
+teste_segmento: build/teste_segmento
+	./build/teste_segmento
 
 test: $(TEST_EXEC)
 	./$(TEST_EXEC)
