@@ -26,14 +26,17 @@ class Conexao {
     CamadaTransporte* transporte_;   // pointer pra delegar o envio
     Reator* reator_;
     
-    std::queue<std::vector<uint8_t>> fila_envio_;
-    std::function<void(const std::vector<uint8_t>&)> receber_callback;
+    std::function<void(const std::vector<uint8_t>&)> receber_callback_;
     
     // estado da conexao
+    std::queue<std::vector<uint8_t>> fila_envio_;
+    uint32_t geracao_ = 0; // qual envio
     bool aguardando_ack_ = false;
     uint32_t prox_seq_ = 0;
     std::vector<uint8_t> em_voo_; // copia do ultimo para retransmissao
     int tentativas_ = 0;
+    bool ativa_ = true;
+    std::function<void()> erro_callback;
 
     // receptor
     uint32_t prox_seq_esperado_ = 1;
@@ -44,7 +47,9 @@ public:
     void enviar(const std::vector<uint8_t>& payload);
     void ao_receber(std::function<void(const std::vector<uint8_t>&)> callback);
     void entregar(const std::vector<uint8_t>& payload); // Transporte chama -> sobe pra app
+    void gerenciar_erro(std::function<void()> callback);
     Conexao(const Conexao&) = delete; // previne copias com =
+
 
 private: 
     void iniciar_envio(const std::vector<uint8_t>& payload);

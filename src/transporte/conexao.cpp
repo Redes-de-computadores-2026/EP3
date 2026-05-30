@@ -3,16 +3,23 @@
 #include "transporte.hpp"
 #include <cstring>
 #include <iostream>
+#include <queue>
 
 Conexao::Conexao(ChaveConexao chave, CamadaTransporte* t, Reator* reator, std::function<void(const std::vector<uint8_t>&)> callback) :
-    chave_(chave), transporte_(t), reator_(reator), receber_callback(callback) {}
+    chave_(chave), transporte_(t), reator_(reator), receber_callback_(callback) {}
 
 void Conexao::agendar_retransmissao() {
-    reator_->agendar(TIMEOUT_DELAY, [this]() {
+    uint32_t minha_geracao = geracao_;
+    reator_->agendar(TIMEOUT_DELAY, [this, minha_geracao]() {
+        // o minha_geracao é uma copia congelada do geracao_ no momento do agendamento
+         if (minha_geracao != geracao_) return; // so retransmite se ainda fizer sentido: se a conexao ainda esta naquela mesma mensagem!
         if (!aguardando_ack_) return;
         if (tentativas_ >= MAX_TENTATIVAS) {
             aguardando_ack_ = false;
-            std::cerr << "[transporte] desistindo após " << MAX_TENTATIVAS << " tentativas\n";
+            ativa_ = false;
+            fila_envio_ = std::queue<std::vector<uint8_t>>();
+            std::cerr << "[transporte] conexao morta após " << MAX_TENTATIVAS << " tentativas" << std::endl;
+             if (erro_callback) erro_callback();
             return;
         }
         transporte_->_enviar_segmento(chave_, em_voo_, DATA, prox_seq_, 0);
@@ -42,6 +49,10 @@ void Conexao::tratar_dado(const uint32_t seq, const std::vector<uint8_t>& payloa
 
 
 void Conexao::enviar(const std::vector<uint8_t>& payload) {
+     if (!ativa_) {
+        std::cerr << "[transporte] conexão morta, envio rejeitado" << std::endl;
+        return;
+    }
     if (!aguardando_ack_) {
         iniciar_envio(payload);
     } else {
@@ -50,16 +61,24 @@ void Conexao::enviar(const std::vector<uint8_t>& payload) {
 }
 
 void Conexao::entregar(const std::vector<uint8_t>& payload) {
-    if (receber_callback) receber_callback(payload);
+    if (receber_callback_) receber_callback_(payload);
 }
 
 void Conexao::iniciar_envio(const std::vector<uint8_t>& payload) {
+    geracao_++;
     prox_seq_++;
     aguardando_ack_ = true;
-    em_voo_.resize(payload.size());
-    memcpy(em_voo_.data(), payload.data(), payload.size());
+    em_voo_ = payload;
     tentativas_ = 0;
     transporte_->_enviar_segmento(chave_, payload, DATA, prox_seq_, 0);
     agendar_retransmissao();
+}
+
+void Conexao::ao_receber(std::function<void(const std::vector<uint8_t>&)> callback) {
+    receber_callback_ = callback;
+}
+
+void Conexao::gerenciar_erro(std::function<void()> callback) {
+    erro_callback = callback;
 }
 
