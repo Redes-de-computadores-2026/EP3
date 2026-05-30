@@ -8,8 +8,9 @@
 
 class CamadaTransporte : public Camada {
     std::map<ChaveConexao, Conexao> conexoes_;
+    Reator* reator_;
 public:
-    CamadaTransporte(uint16_t porta_local);
+    CamadaTransporte(uint16_t porta_local, Reator* r);
     Conexao& abrir(uint16_t porta_local, const Endereco& destino, std::function<void(const std::vector<uint8_t>&)> callback);
     void enviar(const std::vector<uint8_t>& payload, const Endereco& destino) override;
     void receber(const std::vector<uint8_t>& pdu, const Endereco& origem) override;

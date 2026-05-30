@@ -1,7 +1,9 @@
 #pragma once
 #include "segmento.hpp"
+#include "reator.hpp"
 #include <cstdint>
 #include <functional>
+#include <queue>
 
 class CamadaTransporte;
 
@@ -16,17 +18,35 @@ struct ChaveConexao {
 };
 
 class Conexao {
-    ChaveConexao chave_;
-    CamadaTransporte* transporte_;   // back-pointer pra delegar o envio
+    ChaveConexao chave_; // id da conexao
+    // configuracao da camada
+    int MAX_TENTATIVAS = 5;
+    uint32_t TIMEOUT_DELAY = 100;
+
+    CamadaTransporte* transporte_;   // pointer pra delegar o envio
+    Reator* reator_;
+    
+    std::queue<std::vector<uint8_t>> fila_envio_;
     std::function<void(const std::vector<uint8_t>&)> receber_callback;
-    uint16_t porta_local_;
-    uint16_t logico_remoto_;
-    uint16_t porta_remota_;
-    // subpasso 4-5: uint32_t prox_seq_, esperando_ack_; std::vector<uint8_t> em_voo_; etc
+    
+    // estado da conexao
+    bool aguardando_ack_ = false;
+    uint32_t prox_seq_ = 0;
+    std::vector<uint8_t> em_voo_; // copia do ultimo para retransmissao
+    int tentativas_ = 0;
+
+    // receptor
+    uint32_t prox_seq_esperado_ = 1;
 public:
-    Conexao(ChaveConexao chave, CamadaTransporte* t, std::function<void(const std::vector<uint8_t>&)> callback);
+    Conexao(ChaveConexao chave, CamadaTransporte* t, Reator* r, std::function<void(const std::vector<uint8_t>&)> callback);
+    void tratar_ack(const uint32_t ack);
+    void tratar_dado(const uint32_t seq, const std::vector<uint8_t>& payload);
     void enviar(const std::vector<uint8_t>& payload);
     void ao_receber(std::function<void(const std::vector<uint8_t>&)> callback);
     void entregar(const std::vector<uint8_t>& payload); // Transporte chama -> sobe pra app
     Conexao(const Conexao&) = delete; // previne copias com =
+
+private: 
+    void iniciar_envio(const std::vector<uint8_t>& payload);
+    void agendar_retransmissao();
 };

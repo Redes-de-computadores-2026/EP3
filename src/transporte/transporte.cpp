@@ -7,14 +7,14 @@
 #include <cstring>
 #include <map>
 
-CamadaTransporte::CamadaTransporte(uint16_t porta_local) : porta_local_(porta_local) {}
+CamadaTransporte::CamadaTransporte(uint16_t porta_local, Reator* r) : reator_(r), porta_local_(porta_local) {}
 
 Conexao& CamadaTransporte::abrir(uint16_t porta_local, const Endereco& destino, std::function<void(const std::vector<uint8_t>&)> callback) {
     ChaveConexao cv;
     cv.logico_remoto = destino.logico;
     cv.porta_remota = destino.porta;
     cv.porta_local = porta_local;
-    auto [it, inserted] = conexoes_.try_emplace(cv, cv, this, callback);
+    auto [it, inserted] = conexoes_.try_emplace(cv, cv, this, reator_, callback);
     return it->second;
 }
 
@@ -47,10 +47,15 @@ void CamadaTransporte::receber(const std::vector<uint8_t>& pdu, const Endereco& 
         std::cerr << "Não encontramos conexão da porta " << cs.porta_local << " para porta " << cs.porta_remota << std::endl;
         return;
     }
-    std::vector<uint8_t> payload(pdu.size() - TAM_TRANSPORT_HEADER);
-    memcpy(payload.data(), pdu.data() + TAM_TRANSPORT_HEADER, pdu.size() - TAM_TRANSPORT_HEADER);
-    auto& conexao = it->second;
-    conexao.entregar(payload);
+    if (h.flags & ACK) {
+        it->second.tratar_ack(h.ack_num);
+        return;
+    }
+    if (h.flags & DATA) {
+        std::vector<uint8_t> payload(pdu.size() - TAM_TRANSPORT_HEADER);
+        memcpy(payload.data(), pdu.data() + TAM_TRANSPORT_HEADER, pdu.size() - TAM_TRANSPORT_HEADER);
+        it->second.tratar_dado(h.seq_num, payload);
+    }
 }
 
 void CamadaTransporte::_enviar_segmento(const ChaveConexao& chave, const std::vector<uint8_t>& payload, uint8_t flags, uint32_t seq, uint32_t ack) {
