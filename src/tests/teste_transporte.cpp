@@ -31,60 +31,67 @@ public:
 int main() {
     Reator r;
     CamadaTransporte t(100, &r);
+    CamadaSpy teste1;
 
-    CamadaSpy sp;
-
-    bool chamou = false;
-    std::vector<uint8_t> recebido;
+    // Teste de conexao morta e retransmissao
     Endereco e;
-    e.logico = 1000;
+    e.logico = 5;
     e.porta = 200;
-    // t.conectar_abaixo(&sp);
-    // sp.conectar_acima(&t);
-    Conexao&c = t.abrir(100, e, [&](const std::vector<uint8_t>& payload) {
-        chamou = true;
-        recebido = payload;
-    });
 
-    TransportHeader h;
-    h.porta_destino = 100;
-    h.porta_origem  = 200;
-    h.seq_num = 1;
-    h.flags         = DATA;
-    std::vector<uint8_t> pdu(TAM_TRANSPORT_HEADER + 3);
-    serializar_transport_header(h, pdu);
-    pdu[13] = 0x10; pdu[14] = 0x20; pdu[15] = 0x30;
+    bool erro_disparou = false;
+    Conexao& c = t.abrir(100, e, [](auto&){});
+    t.conectar_abaixo(&teste1);
+    teste1.conectar_acima(&t);
+    c.gerenciar_erro([&](){ erro_disparou = true; });
 
-    Endereco origem;
-    origem.logico = 1000;
-    t.receber(pdu, origem);
-
-    assert(chamou);
-    assert(recebido.size() == 3);
-    assert(recebido[0] == 0x10 && recebido[1] == 0x20 && recebido[2] == 0x30);
-
-    std::cout << "Tudo certo no teste ascendente!" << std::endl;
-
-    t.conectar_abaixo(&sp);
-    sp.conectar_acima(&t);
     c.enviar({1});
-    c.enviar({2});
-    assert(sp.envios == 1);
+    r.agendar(700, [&](){ r.parar(); });
+    r.executar();
+    
+    assert(teste1.envios == 6);
+    assert(erro_disparou);
+    c.enviar({9});
+    assert(teste1.envios == 6);
 
-    TransportHeader h2;
-    h2.porta_destino = 100;
-    h2.porta_origem  = 200;
-    h2.flags         = ACK;
-    h2.ack_num = 2;
+    
+    Endereco e2;
+    e2.logico = 6;
+    e2.porta = 201;
+    Conexao& c2 = t.abrir(101, e2, [](auto&){});
+    CamadaSpy teste2;
 
-    std::vector<uint8_t> pdu2(TAM_TRANSPORT_HEADER);
-    serializar_transport_header(h2, pdu2);
-    t.receber(pdu2, origem);
+    t.conectar_abaixo(&teste2);
+    teste2.conectar_acima(&t);
 
-    assert(sp.envios == 2);
-     
+    c2.enviar({1});                                // sp.envios=1, timer @100
+    r.agendar(150, [&](){ r.parar(); });
+    r.executar();                                 // @100 retransmite → sp.envios=2
+    assert(teste2.envios == 2);                       // houve 1 retransmissão
 
-    std::cout << "Tudo certo no teste descendente!" << std::endl;
+    TransportHeader ack; ack.porta_destino=101; ack.porta_origem=201; ack.flags=ACK; ack.ack_num=2;
+    std::vector<uint8_t> ack_pdu(TAM_TRANSPORT_HEADER);
+    serializar_transport_header(ack, ack_pdu);
+    t.receber(ack_pdu, e2);
+
+    r.agendar(250, [&](){ r.parar(); });
+    r.executar();
+    assert(teste2.envios == 2);
+
+    // Teste de deduplicação:
+
+    int n_entregas = 0;
+    Endereco e3;
+    e3.logico = 7;
+    e3.porta = 202;
+    t.abrir(103, e3, [&](const std::vector<uint8_t>&){ n_entregas++; });
+
+    TransportHeader ack2; ack2.porta_destino=103; ack2.porta_origem=202; ack2.flags=DATA; ack2.seq_num=1;
+    std::vector<uint8_t> pdu_data(TAM_TRANSPORT_HEADER + 3);
+    serializar_transport_header(ack2, pdu_data);
+
+    t.receber(pdu_data, e3);
+    t.receber(pdu_data, e3);
+    assert(n_entregas == 1);
 
     return 0;
 }
