@@ -2,13 +2,14 @@
         teste_buffer teste_camada teste_crc teste_enlace \
         teste_canal teste_canal_enlace teste_reator \
         teste_reator_enlace teste_canal_atraso teste_rede \
-        teste_rotas teste_segmento teste_transporte
+        teste_rotas teste_segmento teste_transporte \
+        experimento_rede
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte
 
 MAIN_EXEC = build/rede
-MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
+MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp src/comum/instrumentacao/instrumentacao.cpp
 
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
@@ -32,19 +33,27 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
                           src/enlace/checksum.cpp src/enlace/canal.cpp \
                           src/comum/buffer.cpp
 
-TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
+TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp src/comum/instrumentacao/instrumentacao.cpp
 TESTE_ROTAS_SRCS = src/tests/teste_rotas.cpp src/rede/rotas.cpp
 
 TESTE_REDE_ENLACE_SRCS = src/tests/teste_rede_enlace.cpp \
     src/rede/rede.cpp src/rede/rotas.cpp \
     src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
-    src/socket/udp_socket.cpp src/comum/buffer.cpp src/comum/reator.cpp
+    src/socket/udp_socket.cpp src/comum/buffer.cpp src/comum/reator.cpp \
+    src/comum/instrumentacao/instrumentacao.cpp
+
+EXPERIMENTO_REDE_EXEC = build/experimento_rede
+EXPERIMENTO_REDE_SRCS = experimentos/rede/main.cpp experimentos/rede/experimento_rede.cpp \
+    src/rede/rede.cpp src/rede/rotas.cpp \
+    src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
+    src/socket/udp_socket.cpp src/comum/buffer.cpp src/comum/reator.cpp \
+    src/comum/instrumentacao/instrumentacao.cpp
 
 ## CAMADA TRANSPORTE: ##
 TESTE_SEGMENTO_SRCS = src/tests/teste_segmento.cpp src/comum/buffer.cpp
 TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte.cpp src/transporte/conexao.cpp src/comum/buffer.cpp src/comum/reator.cpp
 
-all: $(MAIN_EXEC) $(TEST_EXEC)
+all: $(MAIN_EXEC) $(TEST_EXEC) $(EXPERIMENTO_REDE_EXEC)
 
 build/teste_rede_enlace: $(TESTE_REDE_ENLACE_SRCS)
 	@mkdir -p $(@D)
@@ -59,6 +68,10 @@ build/teste_segmento: $(TESTE_SEGMENTO_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $(MAIN_EXEC): $(MAIN_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(EXPERIMENTO_REDE_EXEC): $(EXPERIMENTO_REDE_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -141,6 +154,9 @@ teste_transporte: build/teste_transporte
 
 teste_rede: build/teste_rede
 	./build/teste_rede
+
+experimento_rede: $(EXPERIMENTO_REDE_EXEC)
+	./$(EXPERIMENTO_REDE_EXEC)
 
 teste_rede_enlace: build/teste_rede_enlace
 	./build/teste_rede_enlace

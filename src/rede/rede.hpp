@@ -3,6 +3,7 @@
 #include "buffer.hpp"
 #include "camada.hpp"
 #include "rotas.hpp"
+#include "instrumentacao/instrumentacao.hpp"
 #include <cstdint>
 #include <vector>
 #include <optional>
@@ -37,9 +38,14 @@ class CamadaRede : public Camada {
 private:
   TabelaRotas* rotas_;
   uint16_t meu_logico;
+  Instrumentacao instr_;
+
 public:
   CamadaRede(uint16_t logico, TabelaRotas* tabela);
   ~CamadaRede() override = default;
+
+  const Instrumentacao& instrumentacao() const;
+  Instrumentacao& instrumentacao();
 
   void enviar(const std::vector<uint8_t>& payload, const Endereco& destino) override;
   void receber(const std::vector<uint8_t>& pdu, const Endereco& origem) override;
