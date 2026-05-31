@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include "rotas.hpp"
 #include "rede.hpp"
 
 using namespace std;
@@ -31,7 +32,10 @@ public:
 };
 
 void teste_de_encapsulamento() {
-    CamadaRede rede(10, nullptr);
+    TabelaRotas tabela;
+    tabela.inserir(20, "127.0.0.1", 5020);
+    tabela.inserir(30, "127.0.0.1", 5030);
+    CamadaRede rede(10, &tabela);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 
@@ -55,7 +59,10 @@ void teste_de_encapsulamento() {
 }
 
 void teste_enviar_para_si_mesmo() {
-    CamadaRede rede(10, nullptr);
+    TabelaRotas tabela;
+    tabela.inserir(20, "127.0.0.1", 5020);
+    tabela.inserir(30, "127.0.0.1", 5030);
+    CamadaRede rede(10, &tabela);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 
@@ -70,7 +77,10 @@ void teste_enviar_para_si_mesmo() {
 }
 
 void teste_desacoplamento() {
-    CamadaRede rede(10, nullptr);
+    TabelaRotas tabela;
+    tabela.inserir(20, "127.0.0.1", 5020);
+    tabela.inserir(30, "127.0.0.1", 5030);
+    CamadaRede rede(10, &tabela);
     MockCamada transporte;
     rede.conectar_acima(&transporte);
     vector<uint8_t> pdu = {0, 20, 0, 10, 64, 0, 1, 2};
@@ -87,7 +97,10 @@ void teste_desacoplamento() {
 }
 
 void teste_reencaminhar() {
-    CamadaRede rede(10, nullptr);
+    TabelaRotas tabela;
+    tabela.inserir(20, "127.0.0.1", 5020);
+    tabela.inserir(30, "127.0.0.1", 5030);
+    CamadaRede rede(10, &tabela);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
     uint8_t dest = 30;  // Endereco de destino (não sou eu)
@@ -106,7 +119,10 @@ void teste_reencaminhar() {
 }
 
 void teste_receber_ttl_expirado() {
-    CamadaRede rede(10, nullptr);
+    TabelaRotas tabela;
+    tabela.inserir(20, "127.0.0.1", 5020);
+    tabela.inserir(30, "127.0.0.1", 5030);
+    CamadaRede rede(10, &tabela);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 

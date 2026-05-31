@@ -31,7 +31,7 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
                           src/enlace/checksum.cpp src/enlace/canal.cpp \
                           src/comum/buffer.cpp
 
-TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/comum/buffer.cpp
+TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
 TESTE_ROTAS_SRCS = src/tests/teste_rotas.cpp src/rede/rotas.cpp
 
 

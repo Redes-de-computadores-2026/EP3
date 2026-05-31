@@ -9,7 +9,7 @@ void TabelaRotas::inserir(uint16_t logico, const std::string& ip, uint16_t porta
     rotas_[logico] = e;
 }
 
-std::optional<Endereco> TabelaRotas::consultar(uint16_t logico) {
+std::optional<Endereco> TabelaRotas::consultar(uint16_t logico) const {
     auto it = rotas_.find(logico);
     if (it == rotas_.end()) return std::nullopt;
     return it->second;
