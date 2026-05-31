@@ -7,7 +7,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte
 
 MAIN_EXEC = build/rede
-MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/camada_de_rede.cpp
+MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp
 
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
@@ -31,7 +31,7 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
                           src/enlace/checksum.cpp src/enlace/canal.cpp \
                           src/comum/buffer.cpp
 
-TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/camada_de_rede.cpp
+TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/comum/buffer.cpp
 
 
 ## CAMADA TRANSPORTE: ##

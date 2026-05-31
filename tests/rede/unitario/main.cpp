@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-#include "../../../src/rede/camada_de_rede.hpp"
+#include "rede.hpp"
 
 using namespace std;
 
