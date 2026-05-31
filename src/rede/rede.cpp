@@ -75,7 +75,7 @@ void CamadaRede::receber(const std::vector<uint8_t>& pdu, const Endereco& origem
   if (acima) {
     Endereco origem_logica = origem;
     origem_logica.logico = cabecalho.logico_origem;
-    acima->receber(payload, origem);
+    acima->receber(payload, origem_logica);
   }
 }
 

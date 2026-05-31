@@ -92,6 +92,7 @@ void teste_desacoplamento() {
     assert(transporte.pdu.size() == 2);
     assert(transporte.pdu[0] == 1);
     assert(transporte.pdu[1] == 2);
+    assert(transporte.origem.logico == 20);
     
     cout << "teste_desacoplamento" << endl;
 }
