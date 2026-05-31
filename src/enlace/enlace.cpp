@@ -27,6 +27,8 @@ void CamadaEnlace::enviar(const std::vector<uint8_t>& payload, const Endereco& d
                 socket_->enviar(buf, destino);
             });
         }
+    } else {
+        socket_->enviar(buf, destino);
     }
     return;
 }

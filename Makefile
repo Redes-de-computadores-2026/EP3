@@ -1,23 +1,44 @@
-.PHONY: all clean debug release test
+.PHONY: all clean debug release test \
+        teste_buffer teste_camada teste_crc teste_enlace \
+        teste_canal teste_canal_enlace teste_reator \
+        teste_reator_enlace teste_canal_atraso teste_rede \
+        teste_rotas teste_segmento teste_transporte
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/transporte
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte
 
 MAIN_EXEC = build/rede
-MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp
+MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
 
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
-TESTE_CRC_SRCS = src/tests/teste_crc.cpp src/enlace/checksum.cpp
-TESTE_BUFFER_SRCS = src/tests/teste_buffer.cpp src/comum/buffer.cpp
 
-TESTE_ENLACE_SRCS = src/tests/teste_canal_enlace.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp src/enlace/checksum.cpp src/comum/buffer.cpp
-TESTE_CANAL_SRCS = src/tests/teste_canal.cpp src/enlace/canal.cpp
+TESTE_CRC_SRCS    = src/tests/teste_crc.cpp src/enlace/checksum.cpp
+TESTE_BUFFER_SRCS = src/tests/teste_buffer.cpp src/comum/buffer.cpp
+TESTE_CANAL_SRCS  = src/tests/teste_canal.cpp src/enlace/canal.cpp
 TESTE_REATOR_SRCS = src/tests/teste_reator.cpp src/comum/reator.cpp
 
-TESTE_REATOR_ENLACE_SRCS = src/tests/teste_reator_enlace.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
-TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp src/comum/buffer.cpp
+TESTE_ENLACE_SRCS = src/tests/teste_canal_enlace.cpp src/socket/udp_socket.cpp \
+                    src/enlace/enlace.cpp src/enlace/canal.cpp \
+                    src/enlace/checksum.cpp src/comum/buffer.cpp src/comum/reator.cpp
 
+TESTE_REATOR_ENLACE_SRCS = src/tests/teste_reator_enlace.cpp src/comum/reator.cpp \
+                            src/socket/udp_socket.cpp src/enlace/enlace.cpp \
+                            src/enlace/checksum.cpp src/enlace/canal.cpp \
+                            src/comum/buffer.cpp
+
+TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp \
+                          src/socket/udp_socket.cpp src/enlace/enlace.cpp \
+                          src/enlace/checksum.cpp src/enlace/canal.cpp \
+                          src/comum/buffer.cpp
+
+TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
+TESTE_ROTAS_SRCS = src/tests/teste_rotas.cpp src/rede/rotas.cpp
+
+TESTE_REDE_ENLACE_SRCS = src/tests/teste_rede_enlace.cpp \
+    src/rede/rede.cpp src/rede/rotas.cpp \
+    src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
+    src/socket/udp_socket.cpp src/comum/buffer.cpp src/comum/reator.cpp
 
 ## CAMADA TRANSPORTE: ##
 TESTE_SEGMENTO_SRCS = src/tests/teste_segmento.cpp src/comum/buffer.cpp
@@ -25,11 +46,23 @@ TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
 
+build/teste_rede_enlace: $(TESTE_REDE_ENLACE_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 build/teste_transporte: $(TESTE_TRANSPORTE_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/teste_segmento: $(TESTE_SEGMENTO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(MAIN_EXEC): $(MAIN_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(TEST_EXEC): $(TEST_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -65,13 +98,16 @@ build/teste_reator: $(TESTE_REATOR_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(MAIN_EXEC): $(MAIN_SRCS)
+build/teste_rede: $(TESTE_REDE_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(TEST_EXEC): $(TEST_SRCS)
+build/teste_rotas: $(TESTE_ROTAS_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+teste_rotas: build/teste_rotas
+	./build/teste_rotas
 
 teste_canal_atraso: build/teste_canal_atraso
 	./build/teste_canal_atraso
@@ -102,6 +138,12 @@ teste_segmento: build/teste_segmento
 
 teste_transporte: build/teste_transporte
 	./build/teste_transporte
+
+teste_rede: build/teste_rede
+	./build/teste_rede
+
+teste_rede_enlace: build/teste_rede_enlace
+	./build/teste_rede_enlace
 
 test: $(TEST_EXEC)
 	./$(TEST_EXEC)
