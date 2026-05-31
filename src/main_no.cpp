@@ -6,10 +6,21 @@
 #include "udp_socket.hpp"
 
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#define MAX_CLIENTES 1000
+
+TabelaRotas construir_rotas() {
+  TabelaRotas rotas;
+  for (int i = 1; i <= MAX_CLIENTES; ++i) {
+    rotas.inserir(i, "127.0.0.1", 5000 + i);
+  }
+  return rotas;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -29,29 +40,8 @@ int main(int argc, char *argv[]) {
     socket.udpBind(5000 + id_no);
 
     CamadaEnlace enlace(&socket, &reator);
-
-    TabelaRotas rotas;
-    if (id_no == 1) {
-        rotas.inserir(1, "127.0.0.1", 5001);
-        rotas.inserir(2, "127.0.0.1", 5002);
-        rotas.inserir(3, "127.0.0.1", 5003);
-        rotas.inserir(4, "127.0.0.1", 5003); // vamos usar o 3 para chegar no lugar
-    } else if (id_no == 2) {
-        rotas.inserir(1, "127.0.0.1", 5001);
-        rotas.inserir(2, "127.0.0.1", 5002);
-        rotas.inserir(3, "127.0.0.1", 5003);
-        rotas.inserir(4, "127.0.0.1", 5003); // vamos usar o 3 para chegar no lugar
-    } else if (id_no == 3) {
-        rotas.inserir(1, "127.0.0.1", 5001);
-        rotas.inserir(2, "127.0.0.1", 5002);
-        rotas.inserir(3, "127.0.0.1", 5003);
-        rotas.inserir(4, "127.0.0.1", 5004);
-    } else {
-        rotas.inserir(1, "127.0.0.1", 5003); // vamos usar o 3 para chegar no lugar
-        rotas.inserir(2, "127.0.0.1", 5003); // vamos usar o 3 para chegar no lugar
-        rotas.inserir(3, "127.0.0.1", 5003);
-        rotas.inserir(4, "127.0.0.1", 5004);
-    }
+    
+    auto rotas = construir_rotas();
 
     CamadaRede rede(id_no, &rotas);
     CamadaTransporte transporte(6000 + id_no, &reator);
@@ -61,8 +51,8 @@ int main(int argc, char *argv[]) {
     transporte.conectar_abaixo(&rede);
     rede.conectar_acima(&transporte);
 
-    std::vector<Conexao*> conns(5, nullptr);
-    for (int destino = 1; destino <= 4; ++destino) {
+    std::vector<Conexao*> conns(MAX_CLIENTES, nullptr);
+    for (int destino = 1; destino <= MAX_CLIENTES; ++destino) {
         if (destino == id_no) continue;
         Endereco remoto;
         remoto.logico = destino;
