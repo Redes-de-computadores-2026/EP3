@@ -1,7 +1,10 @@
 #include "rede.hpp"
+#include <cstdint>
+#include <vector>
 
-CamadaRede::CamadaRede(uint16_t logico) {
+CamadaRede::CamadaRede(uint16_t logico, TabelaRotas* rotas) {
   meu_logico = logico;
+  rotas_ = rotas;
 }
 
 //O NetEncapsulate da issue

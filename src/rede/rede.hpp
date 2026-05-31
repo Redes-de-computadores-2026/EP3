@@ -2,6 +2,10 @@
 #include "endereco.hpp"
 #include "buffer.hpp"
 #include "camada.hpp"
+#include "rotas.hpp"
+#include <cstdint>
+#include <vector>
+#include <optional>
 
 // Usar como base o código do https://github.com/torvalds/linux/blob/master/net/ipv4/ip_output.c
 struct NetworkHeader {
@@ -31,9 +35,10 @@ inline NetworkHeader desserializar_network_header(const std::vector<uint8_t>& bu
 
 class CamadaRede : public Camada {
 private:
+  TabelaRotas* rotas_;
   uint16_t meu_logico;
 public:
-  CamadaRede(uint16_t logico);
+  CamadaRede(uint16_t logico, TabelaRotas* tabela);
   ~CamadaRede() override = default;
 
   void enviar(const std::vector<uint8_t>& payload, const Endereco& destino) override;

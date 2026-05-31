@@ -31,7 +31,7 @@ public:
 };
 
 void teste_de_encapsulamento() {
-    CamadaRede rede(10);
+    CamadaRede rede(10, nullptr);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 
@@ -45,8 +45,8 @@ void teste_de_encapsulamento() {
     assert(enlace.payload.size() == 6 + payload.size());
     
     vector<uint8_t> pdu = enlace.payload;
-    assert(pdu[0] == 10 && pdu[1] == 0); //resultado do shift e do & com 0xFF do logico_origem
-    assert(pdu[2] == 20 && pdu[3] == 0); //Mesma coisa (20 é o destno)
+    assert(pdu[0] == 0 && pdu[1] == 10); //resultado do shift e do & com 0xFF do logico_origem
+    assert(pdu[2] == 0 && pdu[3] == 20); //Mesma coisa (20 é o destno)
     assert(pdu[4] == 64); //TTL padrao
     assert(pdu[5] == 0); //Protocolo padrao
     assert(pdu[6] == 1 && pdu[7] == 2 && pdu[8] == 3);
@@ -55,7 +55,7 @@ void teste_de_encapsulamento() {
 }
 
 void teste_enviar_para_si_mesmo() {
-    CamadaRede rede(10);
+    CamadaRede rede(10, nullptr);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 
@@ -70,10 +70,10 @@ void teste_enviar_para_si_mesmo() {
 }
 
 void teste_desacoplamento() {
-    CamadaRede rede(10);
+    CamadaRede rede(10, nullptr);
     MockCamada transporte;
     rede.conectar_acima(&transporte);
-    vector<uint8_t> pdu = {20, 0, 10, 0, 64, 0, 1, 2};
+    vector<uint8_t> pdu = {0, 20, 0, 10, 64, 0, 1, 2};
     Endereco origem;
     
     rede.receber(pdu, origem);
@@ -87,12 +87,12 @@ void teste_desacoplamento() {
 }
 
 void teste_reencaminhar() {
-    CamadaRede rede(10);
+    CamadaRede rede(10, nullptr);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
     uint8_t dest = 30;  // Endereco de destino (não sou eu)
                                        //Nao sou eu
-    vector<uint8_t> pdu = {20, 0, dest, 0, 64, 0, 1, 2};
+    vector<uint8_t> pdu = {0, 20, 0, dest, 64, 0, 1, 2};
     Endereco origem;
     
     rede.receber(pdu, origem);
@@ -106,11 +106,11 @@ void teste_reencaminhar() {
 }
 
 void teste_receber_ttl_expirado() {
-    CamadaRede rede(10);
+    CamadaRede rede(10, nullptr);
     MockCamada enlace;
     rede.conectar_abaixo(&enlace);
 
-    vector<uint8_t> pdu = {20, 0, 30, 0, 1, 0, 1, 2};
+    vector<uint8_t> pdu = {0, 20, 0, 30, 1, 0, 1, 2};
     Endereco origem;
     
     rede.receber(pdu, origem);

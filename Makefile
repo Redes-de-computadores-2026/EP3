@@ -32,6 +32,7 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
                           src/comum/buffer.cpp
 
 TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/comum/buffer.cpp
+TESTE_ROTAS_SRCS = src/tests/teste_rotas.cpp src/rede/rotas.cpp
 
 
 ## CAMADA TRANSPORTE: ##
@@ -88,6 +89,13 @@ build/teste_reator: $(TESTE_REATOR_SRCS)
 build/teste_rede: $(TESTE_REDE_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/teste_rotas: $(TESTE_ROTAS_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+teste_rotas: build/teste_rotas
+	./build/teste_rotas
 
 teste_canal_atraso: build/teste_canal_atraso
 	./build/teste_canal_atraso
