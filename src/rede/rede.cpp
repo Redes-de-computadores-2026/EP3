@@ -8,6 +8,14 @@ CamadaRede::CamadaRede(uint16_t logico, TabelaRotas* rotas) {
   rotas_ = rotas;
 }
 
+const Instrumentacao& CamadaRede::instrumentacao() const {
+  return instr_;
+}
+
+Instrumentacao& CamadaRede::instrumentacao() {
+  return instr_;
+}
+
 //O NetEncapsulate da issue
 void CamadaRede::enviar(const std::vector<uint8_t>& payload, const Endereco& destino) {
   NetworkHeader cabecalho;
@@ -17,8 +25,13 @@ void CamadaRede::enviar(const std::vector<uint8_t>& payload, const Endereco& des
 
   std::vector<uint8_t> pacote_rede(TAM_NETWORK_HEADER);
 
+  instr_.incrementar("pacotes_enviados");
+  instr_.incrementar("bytes_cabecalho_enviados", TAM_NETWORK_HEADER);
+  instr_.incrementar("bytes_payload_enviados", static_cast<Instrumentacao::valor_t>(payload.size()));
+
   if (destino.logico == meu_logico) {
     //Nao faz sentido enviar para mim mesmo, entao descartamos o pacote
+    instr_.incrementar("pacotes_descartados_destino_local");
     return;
   }
 
@@ -29,6 +42,7 @@ void CamadaRede::enviar(const std::vector<uint8_t>& payload, const Endereco& des
     auto rota = rotas_->consultar(destino.logico);
     if (!rota) {
       std::cerr << "[rede] sem rota para no " << destino.logico << ", descartando\n";
+      instr_.incrementar("pacotes_descartados_sem_rota");
       return;
     }
     abaixo->enviar(pacote_rede, *rota);
@@ -38,15 +52,20 @@ void CamadaRede::enviar(const std::vector<uint8_t>& payload, const Endereco& des
 void CamadaRede::receber(const std::vector<uint8_t>& pdu, const Endereco& origem) {
   if (pdu.size() < TAM_NETWORK_HEADER) {
     //nao da para ter o conteudo do cabecalho, entao descartamos o pacote
+    instr_.incrementar("pacotes_descartados_sem_cabecalho");
     return;
   }
 
   NetworkHeader cabecalho = desserializar_network_header(pdu);
+  instr_.incrementar("pacotes_recebidos");
+  instr_.incrementar("bytes_cabecalho_recebidos", TAM_NETWORK_HEADER);
+  instr_.incrementar("bytes_payload_recebidos", static_cast<Instrumentacao::valor_t>(pdu.size() - TAM_NETWORK_HEADER));
   
   if (cabecalho.logico_destino != meu_logico) {
     std::vector<uint8_t> pdu_copia = pdu;
     if (cabecalho.ttl <= 1) {
       std::cerr << "[rede] TTL esgotado, descartando\n";
+      instr_.incrementar("pacotes_descartados_ttl");
       return;
     }
     pdu_copia[4] = cabecalho.ttl - 1; //Decrementar o TTL
@@ -62,10 +81,11 @@ void CamadaRede::receber(const std::vector<uint8_t>& pdu, const Endereco& origem
       auto rota = rotas_->consultar(cabecalho.logico_destino);
       if (!rota) {
         std::cerr << "[rede] sem rota para no " << cabecalho.logico_destino << ", descartando\n";
+        instr_.incrementar("pacotes_descartados_sem_rota");
         return;
       }
       abaixo->enviar(pdu_copia, *rota);
-
+      instr_.incrementar("pacotes_reencaminhados");
     }
     return;
   }
@@ -76,6 +96,6 @@ void CamadaRede::receber(const std::vector<uint8_t>& pdu, const Endereco& origem
     Endereco origem_logica = origem;
     origem_logica.logico = cabecalho.logico_origem;
     acima->receber(payload, origem_logica);
+    instr_.incrementar("pacotes_entregues_ao_acima");
   }
 }
-

@@ -15,14 +15,24 @@ CanalSimulado::CanalSimulado(
     std::cerr << "[canal] seed=" << seed << "\n";
 }
 
+const Instrumentacao& CanalSimulado::instrumentacao() const {
+    return instr_;
+}
+
+Instrumentacao& CanalSimulado::instrumentacao() {
+    return instr_;
+}
+
 DecisaoCanal CanalSimulado::aplicar(std::vector<uint8_t> quadro) {
     std::uniform_real_distribution<double> tome(0.0, 1.0);
 
     DecisaoCanal dc;
     dc.quadro = quadro;
+    instr_.incrementar("quadros_enviados");
     double perda_sorteada = tome(gerador);
     if (perda_sorteada < p_perda) {
         if (verboso) std::cerr << "[canal] pacote perdido" << std::endl;
+        instr_.incrementar("quadros_perdidos");
         dc.descartar = true;
         return dc;
     }
@@ -34,6 +44,7 @@ DecisaoCanal CanalSimulado::aplicar(std::vector<uint8_t> quadro) {
         size_t byte = indice_byte(gerador);
         int bit = indice_bit(gerador);
         quadro[byte] ^= (1 << bit);
+        instr_.incrementar("quadros_corrompidos");
     }
     double atraso_sorteado = tome(gerador);
     if (atraso_sorteado < p_atraso) {
@@ -41,6 +52,7 @@ DecisaoCanal CanalSimulado::aplicar(std::vector<uint8_t> quadro) {
         std::uniform_int_distribution<uint32_t> atraso_ms_uniforme(atraso_min_ms, atraso_max_ms);
         uint32_t atraso_ms = atraso_ms_uniforme(gerador);
         dc.atraso_ms = atraso_ms;
+        instr_.incrementar("quadros_atrasados");
     }
 
     return dc;
