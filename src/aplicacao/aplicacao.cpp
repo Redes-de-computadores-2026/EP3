@@ -26,7 +26,7 @@ void CamadaAplicacao::conectar(uint16_t no_remoto, uint16_t porta_remota) {
     });
 
     AppHeader h{ HELLO, session_id };
-    conn->enviar(montar_mensagem(h));
+    conn->enviar(serializar_aplicacao(h));
  
     saida << "[APP] conectando ao no " << no_remoto << " (porta " << porta_remota << ")...\n";
 }
@@ -37,13 +37,13 @@ void CamadaAplicacao::enviar_texto(const std::string& texto) {
         return;
     }
     AppHeader h{ MSG, session_id };
-    conn->enviar(montar_mensagem(h, texto)); // Comunica à camada de transporte
+    conn->enviar(serializar_aplicacao(h, texto)); // Comunica à camada de transporte
 }
  
 void CamadaAplicacao::fechar() {
     if (!conn) return;
     AppHeader h{ BYE, session_id };
-    conn->enviar(montar_mensagem(h)); // Comunica à camada de transporte
+    conn->enviar(serializar_aplicacao(h)); // Comunica à camada de transporte
     sessao_aberta = false;
 }
 
@@ -53,8 +53,8 @@ void CamadaAplicacao::ao_receber(const std::vector<uint8_t>& bytes) {
         return;
     }
  
-    AppHeader h = ler_header(bytes);
-    std::string text = ler_texto(bytes);
+    AppHeader h = desserializar_header(bytes);
+    std::string text = desserializar_texto(bytes);
  
     switch (static_cast<TipoMensagem>(h.msg_type)) {
         case HELLO:
