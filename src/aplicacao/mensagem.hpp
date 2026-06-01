@@ -10,7 +10,6 @@ enum TipoMensagem : uint8_t {
     DISCONNECT   = 0x03,
 };
 
-
 constexpr size_t TAM_APP_HEADER = 5;
 
 struct AppHeader {
