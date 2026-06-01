@@ -22,4 +22,4 @@ private:
     uint32_t          session_id;
     bool              sessao_aberta = false;
     std::ostream&     saida;
-}
+};

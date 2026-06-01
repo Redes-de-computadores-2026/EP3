@@ -48,7 +48,13 @@ TESTE_REDE_ENLACE_SRCS = src/tests/teste_rede_enlace.cpp \
 
 ## CAMADA TRANSPORTE: ##
 TESTE_SEGMENTO_SRCS = src/tests/teste_segmento.cpp src/comum/buffer.cpp
-TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte.cpp src/transporte/conexao.cpp src/comum/buffer.cpp src/comum/reator.cpp
+TESTE_APLICACAO_SRCS = src/tests/teste_aplicacao.cpp \
+                         src/aplicacao/aplicacao.cpp \
+                         src/transporte/transporte.cpp src/transporte/conexao.cpp \
+                         src/rede/rede.cpp src/rede/rotas.cpp \
+                         src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
+                         src/socket/udp_socket.cpp \
+                         src/comum/buffer.cpp src/comum/reator.cpp
 
 all: $(MAIN_EXEC) $(TEST_EXEC)
 

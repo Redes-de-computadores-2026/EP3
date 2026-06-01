@@ -25,7 +25,7 @@ void CamadaAplicacao::conectar(uint16_t no_remoto, uint16_t porta_remota) {
         saida << "[APP] OUTRO nao respondeu — conexao encerrada\n";
     });
 
-    AppHeader h{ HELLO, session_id };
+    AppHeader h{ CONNECT, session_id };
     conn->enviar(serializar_aplicacao(h));
  
     saida << "[APP] conectando ao no " << no_remoto << " (porta " << porta_remota << ")...\n";
@@ -36,13 +36,13 @@ void CamadaAplicacao::enviar_texto(const std::string& texto) {
         saida << "[APP] nao conectado\n";
         return;
     }
-    AppHeader h{ MSG, session_id };
+    AppHeader h{ CHAT, session_id };
     conn->enviar(serializar_aplicacao(h, texto)); // Comunica à camada de transporte
 }
  
 void CamadaAplicacao::fechar() {
     if (!conn) return;
-    AppHeader h{ BYE, session_id };
+    AppHeader h{ DISCONNECT, session_id };
     conn->enviar(serializar_aplicacao(h)); // Comunica à camada de transporte
     sessao_aberta = false;
 }
@@ -57,16 +57,16 @@ void CamadaAplicacao::ao_receber(const std::vector<uint8_t>& bytes) {
     std::string text = desserializar_texto(bytes);
  
     switch (static_cast<TipoMensagem>(h.msg_type)) {
-        case HELLO:
+        case CONNECT:
             sessao_aberta = true;
             saida << "[APP] sessao aberta (OUTRO session_id=" << h.session_id << ")\n";
             break;
  
-        case MSG:
+        case CHAT:
             saida << "[OUTRO]: " << text << "\n";
             break;
  
-        case BYE:
+        case DISCONNECT:
             sessao_aberta = false;
             saida << "[APP] OUTRO encerrou a sessao\n";
             break;

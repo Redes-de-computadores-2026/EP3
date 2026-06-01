@@ -4,6 +4,9 @@
 #include "reator.hpp"
 #include "canal.hpp"
 #include "enlace.hpp"
+#include <cassert>
+#include <iostream>
+#include <sstream>
 
 int main()
 {  
@@ -19,16 +22,19 @@ int main()
     CamadaEnlace en1(&sa, &reator, &cs);
     CamadaEnlace en2(&sb, &reator, &cs);
 
-    TabelaRotas t1;
-    TabelaRotas t2;
-    t1.inserir(2, "127.0.0.1", 5002);
-    t2.inserir(1, "127.0.0.1", 5001);
+    reator.registrar_fd(sa.sock(), [&](){ auto r = sa.receber(0); if (r) en1.receber(r->bytes, r->origem); });
+    reator.registrar_fd(sb.sock(), [&](){ auto r = sb.receber(0); if (r) en2.receber(r->bytes, r->origem); });
 
-    CamadaRede rede1(1, &t1);
-    CamadaRede rede2(2, &t2);
+    TabelaRotas tr1;
+    TabelaRotas tr2;
+    tr1.inserir(2, "127.0.0.1", 5002);
+    tr2.inserir(1, "127.0.0.1", 5001);
 
-    CamadaTransporte t1(100, &reator);
-    CamadaTransporte t2(100, &reator);
+    CamadaRede rede1(1, &tr1);
+    CamadaRede rede2(2, &tr2);
+
+    CamadaTransporte t1(7000, &reator);
+    CamadaTransporte t2(7000, &reator);
 
     t1.conectar_abaixo(&rede1);
     rede1.conectar_abaixo(&en1);
@@ -40,15 +46,22 @@ int main()
     en2.conectar_acima(&rede2);
     rede2.conectar_acima(&t2);
 
-    CamadaAplicacao cam1(t1, 7000, std::cout);
-    CamadaAplicacao cam2(t2, 7000, std::cout);
+    std::ostringstream out1, out2;
+    CamadaAplicacao cam1(t1, 7000, out1);
+    CamadaAplicacao cam2(t2, 7000, out2);
     
     cam1.conectar(2, 7000);
     cam2.conectar(1, 7000);
 
-    cam1.enviar_texto("Salve cachorro");
-    cam2.enviar_texto("OBA");
+    reator.agendar(50,  [&](){ cam1.enviar_texto("Salve cachorro"); });
+    reator.agendar(80,  [&](){ cam2.enviar_texto("OBA"); });
+    reator.agendar(400, [&](){ reator.parar(); });
 
+    reator.executar();
+
+    assert(out2.str().find("Salve cachorro") != std::string::npos);
+    assert(out1.str().find("OBA") != std::string::npos);
+    std::cout << "chat OK\n";
     cam1.fechar();
     cam2.fechar();
 
