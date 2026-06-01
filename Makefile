@@ -14,7 +14,8 @@ MAIN_SRCS = src/main_no.cpp src/aplicacao/aplicacao.cpp \
             src/rede/rede.cpp src/rede/rotas.cpp \
             src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
             src/socket/udp_socket.cpp \
-            src/comum/buffer.cpp src/comum/reator.cpp
+            src/comum/buffer.cpp src/comum/reator.cpp \
+            src/comum/instrumentacao/instrumentacao.cpp
 
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
