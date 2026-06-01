@@ -97,9 +97,8 @@ int main(int argc, char *argv[]) {
         std::string msg;
         std::getline(iss, msg);
         if (!msg.empty() && msg.front() == ' ') msg.erase(0, 1);
-        if (destino < 1 || destino > 4 || destino == id_no || !conns[destino]) {
-            std::cerr << "Destino invalido. Use 1..4 e diferente do seu.\n";
-
+        if (!conns[destino]) {
+            std::cerr << "Destino invalido.\n";
             return;
         }
         conns[destino]->enviar(std::vector<uint8_t>(msg.begin(), msg.end()));
