@@ -72,6 +72,13 @@ EXPERIMENTO_ATRASO_SRCS = experimentos/atraso.cpp \
     src/transporte/transporte.cpp src/transporte/conexao.cpp \
     src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
 
+EXPERIMENTO_CONFIAVEL_SRCS = experimentos/confiavel_nao_confiavel.cpp \
+    src/aplicacao/aplicacao.cpp \
+    src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp \
+    src/enlace/checksum.cpp src/rede/rede.cpp src/rede/rotas.cpp \
+    src/transporte/transporte.cpp src/transporte/conexao.cpp \
+    src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
+
 EXPERIMENTO_RETRANSMISSAO_SRCS = experimentos/retransmissao.cpp \
     src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp \
     src/enlace/checksum.cpp src/rede/rede.cpp src/rede/rotas.cpp \
@@ -103,6 +110,10 @@ build/experimento_perda: $(EXPERIMENTO_PERDA_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/experimento_atraso: $(EXPERIMENTO_ATRASO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/experimento_confiavel: $(EXPERIMENTO_CONFIAVEL_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -213,6 +224,9 @@ experimento_overhead: build/experimento_overhead
 
 experimento_retransmissao: build/experimento_retransmissao
 	./build/experimento_retransmissao
+
+experimento_confiavel: build/experimento_confiavel
+	./build/experimento_confiavel
 
 teste_rede: build/teste_rede
 	./build/teste_rede
