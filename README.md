@@ -1,5 +1,5 @@
 # EP3
-EP3
+EP3 da disciplina de MAC0352 -- Redes de Computadores
 
 ### Como compilar:
 Use os comandos definidos no Makefile.
