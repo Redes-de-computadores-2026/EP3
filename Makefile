@@ -5,7 +5,7 @@
         teste_rotas teste_segmento teste_transporte
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte -Isrc/aplicacao
 
 MAIN_EXEC = build/rede
 MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
@@ -34,6 +34,12 @@ TESTE_CANAL_ATRASO_SRCS = src/tests/teste_canal_atraso.cpp src/comum/reator.cpp 
 
 TESTE_REDE_SRCS = tests/rede/unitario/main.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp
 TESTE_ROTAS_SRCS = src/tests/teste_rotas.cpp src/rede/rotas.cpp
+TESTE_APLICACAO_SRCS = src/tests/teste_aplicacao.cpp \
+						src/rede/rede.cpp src/comum/reator.cpp \
+						src/transporte/transporte.cpp \
+						src/aplicacao/aplicacao.cpp \
+						src/enlace/enlace.cpp \
+						src/enlace/canal.cpp
 
 TESTE_REDE_ENLACE_SRCS = src/tests/teste_rede_enlace.cpp \
     src/rede/rede.cpp src/rede/rotas.cpp \
@@ -47,6 +53,10 @@ TESTE_TRANSPORTE_SRCS = src/tests/teste_transporte.cpp src/transporte/transporte
 all: $(MAIN_EXEC) $(TEST_EXEC)
 
 build/teste_rede_enlace: $(TESTE_REDE_ENLACE_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/teste_aplicacao: $(TESTE_APLICACAO_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -108,6 +118,9 @@ build/teste_rotas: $(TESTE_ROTAS_SRCS)
 
 teste_rotas: build/teste_rotas
 	./build/teste_rotas
+
+teste_aplicacao: build/teste_aplicacao
+	./build/teste_aplicacao
 
 teste_canal_atraso: build/teste_canal_atraso
 	./build/teste_canal_atraso
