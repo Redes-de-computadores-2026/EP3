@@ -3,7 +3,7 @@
         teste_canal teste_canal_enlace teste_reator \
         teste_reator_enlace teste_canal_atraso teste_rede \
         teste_rotas teste_segmento teste_transporte \
-        experimento_perda
+        experimento_perda experimento_atraso experimento_retransmissao
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte -Isrc/aplicacao
@@ -66,6 +66,24 @@ EXPERIMENTO_PERDA_SRCS = experimentos/perda.cpp \
     src/transporte/transporte.cpp src/transporte/conexao.cpp \
     src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
 
+EXPERIMENTO_ATRASO_SRCS = experimentos/atraso.cpp \
+    src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp \
+    src/enlace/checksum.cpp src/rede/rede.cpp src/rede/rotas.cpp \
+    src/transporte/transporte.cpp src/transporte/conexao.cpp \
+    src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
+
+EXPERIMENTO_RETRANSMISSAO_SRCS = experimentos/retransmissao.cpp \
+    src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp \
+    src/enlace/checksum.cpp src/rede/rede.cpp src/rede/rotas.cpp \
+    src/transporte/transporte.cpp src/transporte/conexao.cpp \
+    src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
+
+EXPERIMENTO_OVERHEAD_SRCS = experimentos/overhead.cpp \
+    src/socket/udp_socket.cpp src/enlace/enlace.cpp src/enlace/canal.cpp \
+    src/enlace/checksum.cpp src/rede/rede.cpp src/rede/rotas.cpp \
+    src/transporte/transporte.cpp src/transporte/conexao.cpp \
+    src/comum/buffer.cpp src/comum/reator.cpp src/comum/instrumentacao/instrumentacao.cpp
+
 all: $(MAIN_EXEC) $(TEST_EXEC)
 
 build/teste_rede_enlace: $(TESTE_REDE_ENLACE_SRCS)
@@ -81,6 +99,18 @@ build/teste_transporte: $(TESTE_TRANSPORTE_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 build/experimento_perda: $(EXPERIMENTO_PERDA_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/experimento_atraso: $(EXPERIMENTO_ATRASO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/experimento_retransmissao: $(EXPERIMENTO_RETRANSMISSAO_SRCS)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+build/experimento_overhead: $(EXPERIMENTO_OVERHEAD_SRCS)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -174,6 +204,15 @@ teste_transporte: build/teste_transporte
 
 experimento_perda: build/experimento_perda
 	./build/experimento_perda
+
+experimento_atraso: build/experimento_atraso
+	./build/experimento_atraso
+
+experimento_overhead: build/experimento_overhead
+	./build/experimento_overhead
+
+experimento_retransmissao: build/experimento_retransmissao
+	./build/experimento_retransmissao
 
 teste_rede: build/teste_rede
 	./build/teste_rede
