@@ -1,77 +1,115 @@
-#include "reator.hpp"
-#include "udp_socket.hpp"
 #include "enlace.hpp"
-#include "canal.hpp"
-#include "rotas.hpp"
+#include "reator.hpp"
 #include "rede.hpp"
+#include "rotas.hpp"
 #include "transporte.hpp"
-#include "aplicacao.hpp"
+#include "udp_socket.hpp"
+
+#include <cstdint>
 #include <iostream>
 #include <string>
-#include <cstdlib>
+#include <vector>
 
-// Porta de aplicação (LÓGICA) usada por todos os nós do chat.
-static const uint16_t PORTA_APP = 7000;
+struct ConfigNo {
+    uint16_t logico = 0;
+    uint16_t porta_fisica = 0;
+    uint16_t porta_transporte = 0;
+    uint16_t logico_remoto = 0;
+    uint16_t porta_transporte_remota = 0;
+};
 
-// Demo de 2 nós. Uso: ./build/rede <1|2> [perda]
-//   ./build/rede 1          -> no 1, canal perfeito
-//   ./build/rede 2 0.3      -> no 2, 30% de perda no canal
-int main(int argc, char* argv[]) {
-    if (argc < 2 || argc > 3) {
-        std::cerr << "Uso: " << argv[0] << " <1|2> [perda 0..1]\n";
+bool carregar_config(int id, ConfigNo& config) {
+    if (id == 1) {
+        config.logico = 1;
+        config.porta_fisica = 5001;
+        config.porta_transporte = 6001;
+        config.logico_remoto = 2;
+        config.porta_transporte_remota = 6002;
+        return true;
+    }
+    if (id == 2) {
+        config.logico = 2;
+        config.porta_fisica = 5002;
+        config.porta_transporte = 6002;
+        config.logico_remoto = 1;
+        config.porta_transporte_remota = 6001;
+        return true;
+    }
+    return false;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        std::cerr << "Uso: " << argv[0] << " <id_no>\n";
+        std::cerr << "Exemplo: " << argv[0] << " 1\n";
         return 1;
     }
-    int id = std::atoi(argv[1]);
-    if (id != 1 && id != 2) {
-        std::cerr << "Id do no deve ser 1 ou 2\n";
+
+    int id_no = std::stoi(argv[1]);
+    ConfigNo config;
+
+    if (!carregar_config(id_no, config)) {
+        std::cerr << "ID inválido. Use 1 ou 2.\n";
         return 1;
     }
-    double p_perda = (argc == 3) ? std::stod(argv[2]) : 0.0;
-
-    // --- parametros fixos deste no e do peer ---
-    uint16_t meu_logico   = (id == 1) ? 1 : 2;
-    uint16_t minha_fisica = (id == 1) ? 5001 : 5002;
-    uint16_t peer_logico  = (id == 1) ? 2 : 1;
 
     Reator reator;
 
-    // --- monta a pilha, de baixo pra cima ---
-    UdpSocket sock;
-    sock.udpBind(minha_fisica);
+    UdpSocket socket;
+    socket.udpBind(config.porta_fisica);
 
-    CanalSimulado canal(p_perda, 0.0, 0.0, 0, 0, 42);   // só perda; resto zerado
-    CamadaEnlace enlace(&sock, &reator, &canal);
+    CamadaEnlace enlace(&socket, &reator);
 
-    TabelaRotas tabela;
-    tabela.inserir(1, "127.0.0.1", 5001);
-    tabela.inserir(2, "127.0.0.1", 5002);
-    CamadaRede rede(meu_logico, &tabela);
+    TabelaRotas rotas;
+    rotas.inserir(1, "127.0.0.1", 5001);
+    rotas.inserir(2, "127.0.0.1", 5002);
 
-    CamadaTransporte transporte(PORTA_APP, &reator);
+    CamadaRede rede(config.logico, &rotas);
+    CamadaTransporte transporte(config.porta_transporte, &reator);
 
-    rede.conectar_abaixo(&enlace);       enlace.conectar_acima(&rede);
-    transporte.conectar_abaixo(&rede);   rede.conectar_acima(&transporte);
+    rede.conectar_abaixo(&enlace);
+    enlace.conectar_acima(&rede);
+    transporte.conectar_abaixo(&rede);
+    rede.conectar_acima(&transporte);
 
-    // --- aplicacao (chat) ---
-    CamadaAplicacao app(transporte, PORTA_APP, std::cout);
+    Endereco destino;
+    destino.logico = config.logico_remoto;
+    destino.porta = config.porta_transporte_remota;
 
-    // socket UDP -> sobe pela pilha
-    reator.registrar_fd(sock.sock(), [&]() {
-        auto rec = sock.receber(0);
-        if (rec) enlace.receber(rec->bytes, rec->origem);
+    Conexao& conn = transporte.abrir(config.porta_transporte, destino, [&](const std::vector<uint8_t>& msg) {
+        std::string texto(msg.begin(), msg.end());
+        std::cout << "[" << config.logico_remoto << "] " << texto << std::endl;
     });
-    // teclado -> manda mensagem (ou /sair)
+
+    conn.gerenciar_erro([&]() {
+        std::cerr << "Conexao encerrada por excesso de perdas.\n";
+        reator.parar();
+    });
+
+    reator.registrar_fd(socket.sock(), [&]() {
+        while (true) {
+            auto rec = socket.receber(0);
+            if (!rec) {
+                break;
+            }
+            enlace.receber(rec->bytes, rec->origem);
+        }
+    });
+
     reator.registrar_fd(0, [&]() {
         std::string linha;
-        if (!std::getline(std::cin, linha) || linha == "/sair") { app.fechar(); reator.parar(); return; }
-        app.enviar_texto(linha);
+        if (!std::getline(std::cin, linha)) {
+            reator.parar();
+            return;
+        }
+        if (linha == "/sair") {
+            reator.parar();
+            return;
+        }
+        conn.enviar(std::vector<uint8_t>(linha.begin(), linha.end()));
     });
 
-    app.conectar(peer_logico, PORTA_APP);
-
-    std::cout << "no " << meu_logico << " pronto (UDP " << minha_fisica
-              << ", perda=" << p_perda << "). Digite e tecle Enter. /sair para sair.\n";
-
+    std::cout << "No " << config.logico << " pronto. Digite mensagens ou /sair.\n";
     reator.executar();
     return 0;
 }

@@ -22,6 +22,7 @@ void Conexao::agendar_retransmissao() {
              if (erro_callback) erro_callback();
             return;
         }
+        transporte_->instrumentacao().incrementar("retransmissoes");
         transporte_->_enviar_segmento(chave_, em_voo_, DATA, prox_seq_, 0);
         tentativas_++;
         agendar_retransmissao();
@@ -30,6 +31,7 @@ void Conexao::agendar_retransmissao() {
 
 void Conexao::tratar_ack(const uint32_t ack) {
     if (ack != prox_seq_ + 1) return;
+    transporte_->instrumentacao().incrementar("acks_recebidos");
     aguardando_ack_ = false;
     em_voo_.clear();
     if (!fila_envio_.empty()) {
@@ -43,6 +45,8 @@ void Conexao::tratar_dado(const uint32_t seq, const std::vector<uint8_t>& payloa
     if (seq == prox_seq_esperado_) {
         entregar(payload);
         prox_seq_esperado_++;
+    } else {
+        transporte_->instrumentacao().incrementar("duplicatas_descartadas");
     }
     transporte_->_enviar_segmento(chave_, {}, ACK, 0, prox_seq_esperado_);
 }
@@ -61,6 +65,7 @@ void Conexao::enviar(const std::vector<uint8_t>& payload) {
 }
 
 void Conexao::entregar(const std::vector<uint8_t>& payload) {
+    transporte_->instrumentacao().incrementar("entregues");
     if (receber_callback_) receber_callback_(payload);
 }
 
@@ -81,4 +86,3 @@ void Conexao::ao_receber(std::function<void(const std::vector<uint8_t>&)> callba
 void Conexao::gerenciar_erro(std::function<void()> callback) {
     erro_callback = callback;
 }
-
