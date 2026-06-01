@@ -21,7 +21,7 @@ class Conexao {
     ChaveConexao chave_; // id da conexao
     // configuracao da camada
     int MAX_TENTATIVAS = 5;
-    uint32_t TIMEOUT_DELAY = 100;
+    uint32_t TIMEOUT_DELAY = 1000;
 
     CamadaTransporte* transporte_;   // pointer pra delegar o envio
     Reator* reator_;

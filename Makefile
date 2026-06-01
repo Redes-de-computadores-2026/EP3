@@ -9,7 +9,12 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -std=c++17 -Isrc/comum -Isrc/socket -Isrc/enlace -Isrc/rede -Isrc/transporte -Isrc/aplicacao
 
 MAIN_EXEC = build/rede
-MAIN_SRCS = src/main_no.cpp src/socket/udp_socket.cpp src/rede/rede.cpp src/rede/rotas.cpp src/comum/buffer.cpp src/comum/instrumentacao/instrumentacao.cpp
+MAIN_SRCS = src/main_no.cpp src/aplicacao/aplicacao.cpp \
+            src/transporte/transporte.cpp src/transporte/conexao.cpp \
+            src/rede/rede.cpp src/rede/rotas.cpp \
+            src/enlace/enlace.cpp src/enlace/checksum.cpp src/enlace/canal.cpp \
+            src/socket/udp_socket.cpp \
+            src/comum/buffer.cpp src/comum/reator.cpp
 
 TEST_EXEC = build/teste
 TEST_SRCS = src/tests/teste_camada.cpp src/socket/udp_socket.cpp
