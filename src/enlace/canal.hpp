@@ -1,4 +1,5 @@
 #pragma once
+#include "instrumentacao/instrumentacao.hpp"
 #include <random>
 #include <vector>
 #include <optional>
@@ -17,8 +18,12 @@ class CanalSimulado {
     uint32_t atraso_max_ms = 0;
     std::mt19937 gerador;
     bool verboso = false;
+    Instrumentacao instr_;
 public:
 
     CanalSimulado(double p_perda, double p_corrupcao, double p_atraso, uint32_t atraso_min_ms, uint32_t atraso_max_ms, int seed = 42);
     DecisaoCanal aplicar(std::vector<uint8_t> quadro);
+
+    const Instrumentacao& instrumentacao() const;
+    Instrumentacao& instrumentacao();
 };

@@ -9,6 +9,14 @@
 
 CamadaTransporte::CamadaTransporte(uint16_t porta_local, Reator* r) : reator_(r), porta_local_(porta_local) {}
 
+const Instrumentacao& CamadaTransporte::instrumentacao() const {
+    return instr_;
+}
+
+Instrumentacao& CamadaTransporte::instrumentacao() {
+    return instr_;
+}
+
 Conexao& CamadaTransporte::abrir(uint16_t porta_local, const Endereco& destino, std::function<void(const std::vector<uint8_t>&)> callback) {
     ChaveConexao cv;
     cv.logico_remoto = destino.logico;
@@ -27,6 +35,7 @@ void CamadaTransporte::enviar(const std::vector<uint8_t>& payload, const Enderec
     std::vector<uint8_t> buf(TAM_TRANSPORT_HEADER + payload.size());
     serializar_transport_header(h, buf);
     memcpy(buf.data() + TAM_TRANSPORT_HEADER, payload.data(), payload.size());
+    registrar_envio_segmento(payload.size(), h.flags);
     if (abaixo) {
         abaixo->enviar(buf, destino);
     }    
@@ -34,9 +43,13 @@ void CamadaTransporte::enviar(const std::vector<uint8_t>& payload, const Enderec
 
 void CamadaTransporte::receber(const std::vector<uint8_t>& pdu, const Endereco& origem) {
     if (!(pdu.size() >= TAM_TRANSPORT_HEADER)) {
+        instr_.incrementar("segmentos_descartados_sem_cabecalho");
         std::cerr << "Tamanho do segmento é menor do que o necessário." << std::endl;
         return;
     }
+    instr_.incrementar("segmentos_recebidos");
+    instr_.incrementar("bytes_cabecalho_recebidos", TAM_TRANSPORT_HEADER);
+    instr_.incrementar("bytes_payload_recebidos", static_cast<Instrumentacao::valor_t>(pdu.size() - TAM_TRANSPORT_HEADER));
     TransportHeader h = desserializar_transport_header(pdu);
     ChaveConexao cs;
     cs.porta_local = h.porta_destino;
@@ -44,6 +57,7 @@ void CamadaTransporte::receber(const std::vector<uint8_t>& pdu, const Endereco& 
     cs.porta_remota = h.porta_origem;
     auto it = conexoes_.find(cs);
     if (it == conexoes_.end()) {
+        instr_.incrementar("segmentos_descartados_sem_conexao");
         std::cerr << "Não encontramos conexão da porta " << cs.porta_local << " para porta " << cs.porta_remota << std::endl;
         return;
     }
@@ -71,7 +85,20 @@ void CamadaTransporte::_enviar_segmento(const ChaveConexao& chave, const std::ve
     Endereco d;
     d.logico = chave.logico_remoto;
     d.porta = chave.porta_remota;
+    registrar_envio_segmento(payload.size(), flags);
     if (abaixo) {
         abaixo->enviar(buf, d);
+    }
+}
+
+void CamadaTransporte::registrar_envio_segmento(std::size_t payload_size, uint8_t flags) {
+    instr_.incrementar("segmentos_enviados");
+    instr_.incrementar("bytes_cabecalho_enviados", TAM_TRANSPORT_HEADER);
+    instr_.incrementar("bytes_payload_enviados", static_cast<Instrumentacao::valor_t>(payload_size));
+    if (flags & ACK) {
+        instr_.incrementar("acks_enviados");
+    }
+    if (flags & DATA) {
+        instr_.incrementar("dados_enviados");
     }
 }
