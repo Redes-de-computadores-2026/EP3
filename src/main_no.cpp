@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
     }
 
     int id_no = std::stoi(argv[1]);
-    if (id_no < 1 || id_no > 4) {
-        std::cerr << "Id invalido. Use 1, 2, 3 ou 4.\n";
-        return 1;
-    }
 
     Reator reator;
     UdpSocket socket;
-    socket.udpBind(5000 + id_no);
+    auto res = socket.udpBind(5000 + id_no);
+    if (!res) {
+        std::cerr << "Erro ao criar socket para o no " << id_no << ". Porta 5000+" << id_no << " pode estar em uso.\n";
+        return 1;
+    }
 
     CamadaEnlace enlace(&socket, &reator);
     
